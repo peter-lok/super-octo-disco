@@ -1,13 +1,16 @@
 import express from 'express';
 
+const express = require('express');
 const app = express();
+const tf = require('@tensorflow/tfjs-node');
 
 app.get('/', (req, res) => {
   res.send('Home Page');
 });
 
-app.listen(3000, () => {
-  console.log('Successful');
+const port = 3001;
+app.listen(port, () => {
+  console.log('Successful, running on port %d', port);
 });
 
 const images = [
@@ -27,9 +30,36 @@ app.get('/images/:id', (req, res) => {
   }
   res.json(image);
 });
-
-// app.post('/images', express.json(), (req, res) => {
-//   const new_img = { id: images.length+1, url: req.body.url, title: req.body.title };
-//   images.push(new_img);
-//   res.status(201).json(new_img);
-// });
+// add image
+app.post('/images', express.json(), (req, res) => {
+  // const {url, title} = req.body;
+  // if(!url || !title)
+  //   return res.status(400).json({ error: 'Please fill in both URL and title'})
+  const new_img = { id: images.length+1, url: req.body.url, title: req.body.title };
+  images.push(new_img);
+  res.status(201).json(new_img);
+});
+// update image
+app.put('/images/:id', express.json(), (req, res) => {
+  const { id } = req.params;
+  const { url, title } = req.body;
+  const image = images.find(i => i.id === parseInt(id));
+  if (!image) {
+    return res.status(404).json({ error: 'Image not found' });
+  }
+  image.url = url || image.url;
+  image.title = title || image.title;
+  res.json(image);
+});
+// delete image
+app.delete('/images/:id', (req, res) => {
+  const { id } = req.params;
+  const index = images.findIndex(i => i.id === parseInt(id));
+  if (index === -1) {
+    return res.status(404).json({ error: 'Image not found' });
+  }
+  // const deletedImage = images.splice(index, 1)[0];
+  // res.json(deletedImage);
+  images.splice(index, 1);
+  res.status(204).send();
+});
